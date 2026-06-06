@@ -93,8 +93,7 @@ function classifyDayMaster(score) {
   if (score >= 72) return "Very Strong";
   if (score >= 58) return "Strong";
   if (score >= 43) return "Balanced";
-  if (score >= 28) return "Weak";
-  return "Very Weak";
+  return "Weak";
 }
 
 function getStatus(score) {
@@ -164,7 +163,7 @@ export function calculateDayMasterStrengthV3(pillars) {
       (BRANCH_MAIN_WEIGHT[position] || 0.5) * branchMultiplier
     );
 
-    pillar.hiddenStems.forEach((hiddenStem, index) => {
+    (pillar.hiddenStems || []).forEach((hiddenStem, index) => {
       const hiddenMultiplier =
         seasonElement && hiddenStem.element
           ? SEASON_SUPPORT[seasonElement]?.[hiddenStem.element] || 1
@@ -210,5 +209,17 @@ export function calculateDayMasterStrengthV3(pillars) {
     status,
     explanation:
       "Day Master strength is estimated from visible stems, branch elements, hidden stems, month season influence, and resource support.",
+          strengthScore: score,
+    strengthLabel: label,
+    reasoningFactors: {
+      dayElement,
+      supportingElement,
+      seasonElement,
+      elementScores,
+      selfScore: Number(selfScore.toFixed(2)),
+      resourceScore: Number(resourceScore.toFixed(2)),
+      totalScore: Number(totalScore.toFixed(2)),
+      supportRatio: Number(rawSupportRatio.toFixed(3)),
+    },
   };
 }
