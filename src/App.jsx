@@ -896,7 +896,7 @@ function TopProfileStrengthSection({ chart, uiChart }) {
               item.description ||
               item.publicMeaning ||
               "This pattern influences how you think, respond and make decisions in daily life.",
-            score: normalizeScore(item.score ?? item.percentage ?? item.value),
+            score: normalizeScore(item.percentage ?? item.score ?? item.value),
           };
         })
         // IMPORTANT:

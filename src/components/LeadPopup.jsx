@@ -13,7 +13,6 @@ export default function LeadPopup({ open, setOpen }) {
 
     if (!email) return;
 
-    console.log("Collected email:", email);
     setSubmitted(true);
 
     // Send to backend in the background (fire-and-forget) so the coupon reveal

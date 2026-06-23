@@ -547,26 +547,43 @@ export const mapChartToUi = (chart, selectedYear) => {
 
     archetypes,
 
-    elements: Object.entries(
-  chart?.elementBalance?.percentages || {}
-).map(([name, percentage]) => {
-  const annualElementStrengths =
-    chart?.annualOverlayV3?.elementStrengths ||
-    chart?.annualOverlay?.elementStrengths ||
-    {};
+    elements: (() => {
+      const natalWeighted = chart?.elementBalance?.weighted || {};
+      const percentages = chart?.elementBalance?.percentages || {};
 
-  return {
-    key: name,
-    name,
-    label: `${percentage}%`,
-    publicMeaning: "",
-    percentage,
+      // The year pillar's element points (e.g. 2026 Bing-Wu/Fire Horse skews
+      // heavily Fire). Same raw-points scale as elementBalance.weighted, so
+      // adding it in and renormalising treats the year as a 5th pillar.
+      const annualElementPoints =
+        chart?.annualOverlayV4?.annualElements ||
+        chart?.annualOverlay?.annualElements ||
+        chart?.annualOverlayV3?.elementScores ||
+        {};
 
-    annualPercentage:
-      annualElementStrengths[name] ??
-      Number(percentage || 0),
-  };
-}),
+      const combinedWeighted = Object.fromEntries(
+        Object.keys(percentages).map((name) => [
+          name,
+          Number(natalWeighted[name] || 0) + Number(annualElementPoints[name] || 0),
+        ])
+      );
+      const combinedTotal = Object.values(combinedWeighted).reduce(
+        (sum, value) => sum + value,
+        0
+      );
+
+      return Object.entries(percentages).map(([name, percentage]) => ({
+        key: name,
+        name,
+        label: `${percentage}%`,
+        publicMeaning: "",
+        percentage,
+
+        annualPercentage:
+          combinedTotal > 0
+            ? Number(((combinedWeighted[name] / combinedTotal) * 100).toFixed(1))
+            : Number(percentage || 0),
+      }));
+    })(),
 
     personalEnergyBalance: {
   coreEnergyStatus:
