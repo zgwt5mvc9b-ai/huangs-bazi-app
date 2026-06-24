@@ -2063,16 +2063,14 @@ function AdminFullReport({ report, clientName }) {
             🗓️ Monthly Outlook — {report.annualEnergy?.selectedYear || ""}
           </h3>
           <p className="mt-2 text-sm text-stone-500">
-            Each month's dominant element read against this chart's favourable
-            and caution elements.
+            Each month's energy read against this chart's favourable and
+            caution elements.
           </p>
           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
                   <th className="px-4 py-2.5">Month</th>
-                  <th className="px-4 py-2.5">Pillar</th>
-                  <th className="px-4 py-2.5">Dominant</th>
                   <th className="px-4 py-2.5">Read</th>
                   <th className="px-4 py-2.5">Note</th>
                 </tr>
@@ -2085,12 +2083,6 @@ function AdminFullReport({ report, clientName }) {
                   >
                     <td className="px-4 py-2.5 font-semibold text-slate-800">
                       {item.monthName}
-                    </td>
-                    <td className="px-4 py-2.5 text-stone-600">
-                      {item.chinese} ({item.branchAnimal})
-                    </td>
-                    <td className="px-4 py-2.5 text-stone-600">
-                      {item.dominantElement}
                     </td>
                     <td className="px-4 py-2.5">
                       <span

@@ -52,14 +52,16 @@ function getMonthlyRead(dominantElement, usefulGodV4) {
   return "Neutral";
 }
 
-function buildMonthlyNote(dominantElement, read) {
+function buildMonthlyNote({ chinese, branchAnimal, dominantElement, read }) {
+  const lead = `${chinese} (${branchAnimal}) brings ${dominantElement} energy this month`;
+
   if (read === "Good") {
-    return `${dominantElement} energy is supportive this month - a good window to act on plans.`;
+    return `${lead} — supportive, a good window to act on plans.`;
   }
   if (read === "Caution") {
-    return `${dominantElement} energy adds to elements you're already managing carefully this year - pace yourself this month.`;
+    return `${lead} — adds to what you're already managing carefully, so pace yourself.`;
   }
-  return `${dominantElement} energy is fairly neutral for this chart this month.`;
+  return `${lead} — fairly neutral for this chart.`;
 }
 
 export function buildMonthlyOverlayV1({ selectedYear, usefulGodV4 }) {
@@ -78,17 +80,20 @@ export function buildMonthlyOverlayV1({ selectedYear, usefulGodV4 }) {
     const dominantElement = getDominantElement(elementScores);
     const read = getMonthlyRead(dominantElement, usefulGodV4);
 
+    const chinese = `${monthPillar.stem.zh}${monthPillar.branch.zh}`;
+    const branchAnimal = monthPillar.branch.animal;
+
     return {
       month: monthNumber,
       monthName,
       year: selectedYear,
-      chinese: `${monthPillar.stem.zh}${monthPillar.branch.zh}`,
+      chinese,
       stemName: monthPillar.stem.label,
-      branchAnimal: monthPillar.branch.animal,
+      branchAnimal,
       elementScores,
       dominantElement,
       read,
-      note: buildMonthlyNote(dominantElement, read),
+      note: buildMonthlyNote({ chinese, branchAnimal, dominantElement, read }),
     };
   });
 
