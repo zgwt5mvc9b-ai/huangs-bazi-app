@@ -155,10 +155,13 @@ export function buildPaidReportSchemaV1(chart) {
 
     narrative: chart?.pdfReportSchema || chart?.pdfReportSchemaV1 || null,
 
+    personalDirectionsAndStars: {
+      eightMansions: chart?.eightMansionsV1 || null,
+      shenSha: chart?.shenShaV1 || null,
+    },
+
     futureModules: {
       dziRecommendations: null,
-      fengShuiSupport: null,
-      monthlyTiming: null,
       wealthTiming: null,
       emotionalTriggers: null,
     },

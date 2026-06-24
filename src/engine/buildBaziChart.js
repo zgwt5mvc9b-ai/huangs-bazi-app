@@ -13,6 +13,8 @@ import { buildProductRecommendationsV1 } from "./productRecommendationsV1.js";
 import { buildAnnualOverlayV3 } from "./annualOverlayV3.js";
 import { annualOverlayV4 } from "./annualOverlayV4.js";
 import { buildMonthlyOverlayV1 } from "./monthlyOverlayV1.js";
+import { buildEightMansionsV1 } from "./eightMansionsV1.js";
+import { buildShenShaV1 } from "./shenShaV1.js";
 import { buildRelationshipEngineV2 } from "./relationshipEngineV2.js";
 import { buildGenderInfluenceV1 } from "./genderInfluenceV1.js";
 import { buildCareerEngineV1 } from "./careerEngineV1.js";
@@ -229,6 +231,29 @@ export function buildBaziChart(input) {
   } catch (error) {
     console.warn("MonthlyOverlayV1 failed safely:", error);
     monthlyOverlayV1Error = error.message;
+  }
+
+  let eightMansionsV1Result = null;
+  let eightMansionsV1Error = null;
+
+  try {
+    eightMansionsV1Result = buildEightMansionsV1({
+      birthDate: normalizedInput.birthDate,
+      gender: normalizedInput.gender,
+    });
+  } catch (error) {
+    console.warn("EightMansionsV1 failed safely:", error);
+    eightMansionsV1Error = error.message;
+  }
+
+  let shenShaV1Result = null;
+  let shenShaV1Error = null;
+
+  try {
+    shenShaV1Result = buildShenShaV1({ pillars });
+  } catch (error) {
+    console.warn("ShenShaV1 failed safely:", error);
+    shenShaV1Error = error.message;
   }
 
   const consumerEngineInput = buildConsumerEngineInput({
@@ -635,6 +660,8 @@ export function buildBaziChart(input) {
       annualOverlayV3,
       annualOverlayV4: annualOverlayV4Result,
       monthlyOverlayV1: monthlyOverlayV1Result,
+      eightMansionsV1: eightMansionsV1Result,
+      shenShaV1: shenShaV1Result,
 
       archetypes,
       adjustedArchetypes,
@@ -705,6 +732,14 @@ export function buildBaziChart(input) {
 
   if (monthlyOverlayV1Error) {
     warnings.push(`MonthlyOverlayV1 failed safely: ${monthlyOverlayV1Error}`);
+  }
+
+  if (eightMansionsV1Error) {
+    warnings.push(`EightMansionsV1 failed safely: ${eightMansionsV1Error}`);
+  }
+
+  if (shenShaV1Error) {
+    warnings.push(`ShenShaV1 failed safely: ${shenShaV1Error}`);
   }
 
   if (relationshipArchetypeV1Error) {
@@ -871,6 +906,8 @@ export function buildBaziChart(input) {
     annualOverlayV3,
     annualOverlayV4: annualOverlayV4Result,
     monthlyOverlayV1: monthlyOverlayV1Result,
+    eightMansionsV1: eightMansionsV1Result,
+    shenShaV1: shenShaV1Result,
     archetypeOverlayV3,
 
     elementBalance,

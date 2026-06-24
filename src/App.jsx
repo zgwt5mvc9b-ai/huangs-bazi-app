@@ -1920,6 +1920,8 @@ function AdminFullReport({ report, clientName }) {
   const usefulGod = report.usefulGodAndElements || {};
   const lifeAreas = report.lifeAreas || {};
   const stones = report.practicalSupport?.stones || {};
+  const eightMansions = report.personalDirectionsAndStars?.eightMansions || null;
+  const shenSha = report.personalDirectionsAndStars?.shenSha?.stars || [];
 
   const rankedProfiles = [...(personality.tenProfileScoring?.rankedProfiles || [])].sort(
     (a, b) => b.percentage - a.percentage
@@ -2453,6 +2455,70 @@ function AdminFullReport({ report, clientName }) {
           </div>
         )}
       </AdminReportSection>
+
+      {eightMansions && (
+        <AdminReportSection icon="🧭" title="Personal Directions (Eight Mansions)">
+          <p className="mt-3 text-base text-stone-700">
+            <strong>
+              {eightMansions.lifeStar} ({eightMansions.trigram}, {eightMansions.element})
+            </strong>{" "}
+            · Personal direction: {eightMansions.personalDirection} · {eightMansions.group}
+          </p>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-green-700">
+                Favourable Directions
+              </p>
+              <AdminBulletList
+                items={eightMansions.favourableDirections}
+                render={(item) => (
+                  <>
+                    <strong>{item.direction}</strong> — {item.name} ({item.label}):{" "}
+                    {item.theme}
+                  </>
+                )}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-700">
+                Unfavourable Directions
+              </p>
+              <AdminBulletList
+                items={eightMansions.unfavourableDirections}
+                render={(item) => (
+                  <>
+                    <strong>{item.direction}</strong> — {item.name} ({item.label})
+                  </>
+                )}
+              />
+            </div>
+          </div>
+        </AdminReportSection>
+      )}
+
+      {!!shenSha.length && (
+        <AdminReportSection icon="🌸" title="Personal Stars (Shen Sha)">
+          <AdminBulletList
+            items={shenSha}
+            render={(item) => {
+              const branches = item.branches
+                ? item.branches.map((b) => `${b.zh} ${b.animal}`).join(" / ")
+                : `${item.branch.zh} ${item.branch.animal}`;
+              return (
+                <>
+                  <strong>
+                    {item.name} ({item.zh})
+                  </strong>{" "}
+                  — {branches}
+                  {item.active ? " · active in this chart" : ""}. {item.theme}
+                  {item.caution ? ` ${item.caution}` : ""}
+                </>
+              );
+            }}
+          />
+        </AdminReportSection>
+      )}
 
       <details
         data-html2canvas-ignore="true"
