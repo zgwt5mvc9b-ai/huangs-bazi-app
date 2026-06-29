@@ -1,14 +1,84 @@
 // Vercel serverless function: capture lead emails from the BaZi app popup.
 //
-// Phase-1 behaviour:
+// Behaviour:
 //   - Validate the email.
-//   - Log it to the Vercel function console (Vercel dashboard > Logs).
-//   - OPTIONALLY forward it to a Google Sheet / Zapier / Make webhook if you
-//     set the LEAD_WEBHOOK_URL environment variable. This lets leads land in a
-//     spreadsheet with no code change.
+//   - Create (or update) a Shopify Customer record with marketing consent,
+//     tagged "bazi-app-lead", via the Shopify Admin API. Requires
+//     SHOPIFY_SHOP_DOMAIN and SHOPIFY_ADMIN_API_TOKEN env vars (set in
+//     Vercel project settings - see custom app setup in Shopify Admin >
+//     Settings > Apps and sales channels > Develop apps).
+//   - Also logs to the Vercel function console, and optionally forwards to a
+//     webhook if LEAD_WEBHOOK_URL is set, as a fallback / secondary record.
 //
-// Vercel's filesystem is ephemeral, so a local file won't persist — the webhook
-// approach is the standard way to get rows into a Google Sheet.
+// If the Shopify env vars aren't set yet, the Shopify sync is skipped
+// (logged as a warning) rather than failing the whole request - the coupon
+// reveal in the UI never depends on this succeeding.
+
+// Bump this periodically - Shopify supports each dated API version for at
+// least 12 months after release.
+const SHOPIFY_API_VERSION = "2025-10";
+
+async function upsertShopifyCustomer(email) {
+  const shopDomain = process.env.SHOPIFY_SHOP_DOMAIN;
+  const accessToken = process.env.SHOPIFY_ADMIN_API_TOKEN;
+
+  if (!shopDomain || !accessToken) {
+    console.warn(
+      "SHOPIFY_CUSTOMER_SYNC_SKIPPED: missing SHOPIFY_SHOP_DOMAIN or SHOPIFY_ADMIN_API_TOKEN"
+    );
+    return { ok: false, skipped: true };
+  }
+
+  const baseUrl = `https://${shopDomain}/admin/api/${SHOPIFY_API_VERSION}`;
+  const headers = {
+    "Content-Type": "application/json",
+    "X-Shopify-Access-Token": accessToken,
+  };
+
+  // Check for an existing customer with this email first, so a repeat
+  // visitor updates their marketing consent instead of erroring on a
+  // duplicate-email create.
+  const searchResponse = await fetch(
+    `${baseUrl}/customers/search.json?query=${encodeURIComponent(`email:${email}`)}`,
+    { headers }
+  );
+
+  if (!searchResponse.ok) {
+    throw new Error(`Shopify customer search failed: ${searchResponse.status}`);
+  }
+
+  const searchData = await searchResponse.json();
+  const existingCustomer = searchData?.customers?.[0] || null;
+
+  const payload = {
+    customer: {
+      email,
+      email_marketing_consent: {
+        state: "subscribed",
+        opt_in_level: "single_opt_in",
+      },
+      tags: "bazi-app-lead",
+    },
+  };
+
+  const url = existingCustomer
+    ? `${baseUrl}/customers/${existingCustomer.id}.json`
+    : `${baseUrl}/customers.json`;
+  const method = existingCustomer ? "PUT" : "POST";
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Shopify customer ${method} failed: ${response.status} ${errorBody}`);
+  }
+
+  return { ok: true, updated: !!existingCustomer };
+}
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -36,6 +106,13 @@ export default async function handler(req, res) {
 
     const record = { email, source, coupon, ts };
     console.log("LEAD_CAPTURED", JSON.stringify(record));
+
+    try {
+      const result = await upsertShopifyCustomer(email);
+      console.log("SHOPIFY_CUSTOMER_SYNC", JSON.stringify({ email, ...result }));
+    } catch (err) {
+      console.error("SHOPIFY_CUSTOMER_SYNC_FAILED", err?.message || err);
+    }
 
     const webhook = process.env.LEAD_WEBHOOK_URL;
     if (webhook) {
