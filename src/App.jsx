@@ -2601,6 +2601,16 @@ export default function HuangsBaZiUIFrontend() {
     }
   })();
 
+  const [leadsPassword, setLeadsPassword] = useState("");
+
+  function downloadLeadsCsv() {
+    if (!leadsPassword) {
+      alert("Enter the leads export password first.");
+      return;
+    }
+    window.open(`/api/leads?password=${encodeURIComponent(leadsPassword)}`, "_blank");
+  }
+
   const [form, setForm] = useState({
     name: "",
     birthDate: "",
@@ -2729,6 +2739,23 @@ export default function HuangsBaZiUIFrontend() {
                 <p className="mt-1 text-xs text-amber-700">
                   This view shows the complete paid report. Customers see the teaser version.
                 </p>
+
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <input
+                    type="password"
+                    value={leadsPassword}
+                    onChange={(event) => setLeadsPassword(event.target.value)}
+                    placeholder="Leads export password"
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs text-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={downloadLeadsCsv}
+                    className="rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900"
+                  >
+                    Download Leads CSV
+                  </button>
+                </div>
               </div>
             )}
 
