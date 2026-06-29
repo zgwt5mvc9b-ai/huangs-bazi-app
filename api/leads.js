@@ -53,9 +53,18 @@ export default async function handler(req, res) {
     })
     .filter(Boolean);
 
-  const header = ["Email", "Source", "Coupon", "Timestamp"];
+  const header = [
+    "Email",
+    "Accepts Email Marketing",
+    "Tags",
+    "Source",
+    "Coupon",
+    "Timestamp",
+  ];
   const rows = records.map((r) =>
-    [r.email, r.source, r.coupon, r.ts].map(toCsvField).join(",")
+    [r.email, "Yes", "bazi-app-lead", r.source, r.coupon, r.ts]
+      .map(toCsvField)
+      .join(",")
   );
   const csv = [header.join(","), ...rows].join("\n");
 
