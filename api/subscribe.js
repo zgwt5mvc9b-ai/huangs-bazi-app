@@ -2,39 +2,19 @@
 //
 // Behaviour:
 //   - Validate the email.
-//   - Store the lead in Redis (Upstash, via REDIS env vars) so it can be
-//     retrieved later through /api/leads. This is the primary record now.
 //   - Create (or update) a Shopify Customer record with marketing consent,
 //     tagged "bazi-app-lead", via the Shopify Admin API. Requires
 //     SHOPIFY_SHOP_DOMAIN and SHOPIFY_ADMIN_API_TOKEN env vars (set in
 //     Vercel project settings - see custom app setup in Shopify Admin >
 //     Settings > Apps and sales channels > Develop apps).
 //   - Also logs to the Vercel function console, and optionally forwards to a
-//     webhook if LEAD_WEBHOOK_URL is set, as a fallback / secondary record.
+//     webhook if LEAD_WEBHOOK_URL is set (the primary path now - points at a
+//     Zap that writes straight into Shopify Customers, so no one with access
+//     to this codebase needs to be able to read captured emails).
 //
-// If the Shopify env vars (or Redis env vars) aren't set yet, those steps
-// are skipped (logged as a warning) rather than failing the whole request -
-// the coupon reveal in the UI never depends on any of this succeeding.
-
-import { Redis } from "@upstash/redis";
-
-const LEADS_KEY = "bazi:leads";
-
-function getRedis() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  return new Redis({ url, token });
-}
-
-async function storeLead(record) {
-  const redis = getRedis();
-  if (!redis) {
-    console.warn("LEAD_STORE_SKIPPED: missing Redis env vars");
-    return;
-  }
-  await redis.lpush(LEADS_KEY, JSON.stringify(record));
-}
+// If the Shopify env vars aren't set yet, that step is skipped (logged as a
+// warning) rather than failing the whole request - the coupon reveal in the
+// UI never depends on any of this succeeding.
 
 // Bump this periodically - Shopify supports each dated API version for at
 // least 12 months after release.
@@ -128,12 +108,6 @@ export default async function handler(req, res) {
 
     const record = { email, source, coupon, ts };
     console.log("LEAD_CAPTURED", JSON.stringify(record));
-
-    try {
-      await storeLead(record);
-    } catch (err) {
-      console.error("LEAD_STORE_FAILED", err?.message || err);
-    }
 
     try {
       const result = await upsertShopifyCustomer(email);
